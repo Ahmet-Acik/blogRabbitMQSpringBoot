@@ -11,6 +11,13 @@ public class BlogPostProducer {
 
     public BlogPostProducer(RabbitTemplate rabbitTemplate) {
         this.rabbitTemplate = rabbitTemplate;
+        this.rabbitTemplate.setConfirmCallback((correlationData, ack, cause) -> {
+            if (ack) {
+                System.out.println("Message successfully sent to the broker.");
+            } else {
+                System.err.println("Message failed to send: " + cause);
+            }
+        });
     }
 
     public void sendBlogPost(BlogPost blogPost) {
