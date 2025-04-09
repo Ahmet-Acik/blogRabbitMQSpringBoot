@@ -1,5 +1,7 @@
 package com.example.rabbitMQPractices.entity;
 
+import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
 
 public class BlogPost implements Serializable {
