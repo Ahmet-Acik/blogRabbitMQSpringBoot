@@ -113,4 +113,19 @@ class RabbitMQIntegrationTest {
             throw new AssertionError("Message was not requeued as expected.");
         }
     }
+    @Test
+    void testProducerWhenRabbitMQIsDown() {
+        // Stop RabbitMQ
+        rabbitMQContainer.stop();
+
+        // Attempt to send a message
+        BlogPost blogPost = new BlogPost("1", "Test Title", "Test Content");
+        try {
+            blogPostProducer.sendBlogPost(blogPost);
+            throw new AssertionError("Message should not be sent when RabbitMQ is down.");
+        } catch (Exception e) {
+            // Expected exception due to RabbitMQ being down
+            System.out.println("Producer failed as expected: " + e.getMessage());
+        }
+    }
 }
