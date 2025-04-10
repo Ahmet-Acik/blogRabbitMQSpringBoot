@@ -92,4 +92,25 @@ class RabbitMQIntegrationTest {
         receivedBlogPost = blogPost; // Store the received BlogPost
         latch.countDown(); // Decrement the latch to signal the test
     }
+
+    @Test
+    void testErrorHandling() throws InterruptedException {
+        // Simulate an invalid BlogPost (e.g., null content)
+        BlogPost invalidBlogPost = new BlogPost("1", "Invalid Title", null);
+
+        // Send the invalid BlogPost message
+        blogPostProducer.sendBlogPost(invalidBlogPost);
+
+        // Wait for the message to be processed
+        boolean messageReceived = latch.await(5, TimeUnit.SECONDS);
+
+        // Assert that the message was requeued (listener should handle it)
+        if (messageReceived) {
+            assertEquals(invalidBlogPost.getId(), receivedBlogPost.getId());
+            assertEquals(invalidBlogPost.getTitle(), receivedBlogPost.getTitle());
+            assertEquals(invalidBlogPost.getContent(), receivedBlogPost.getContent());
+        } else {
+            throw new AssertionError("Message was not requeued as expected.");
+        }
+    }
 }
