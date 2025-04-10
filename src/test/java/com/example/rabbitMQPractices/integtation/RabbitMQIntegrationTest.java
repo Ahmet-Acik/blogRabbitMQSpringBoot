@@ -143,4 +143,41 @@ class RabbitMQIntegrationTest {
         // Assert that no message is received
         assertEquals(null, blogPost, "Queue should be empty, but a message was received.");
     }
+
+//    @Test
+//    void testDifferentRoutingKey() throws InterruptedException {
+//        // Send a message with a different routing key
+//        rabbitTemplate.convertAndSend("blogExchange", "differentRoutingKey", new BlogPost("2", "Other Title", "Other Content"));
+//
+//        // Wait for the latch (should not be decremented)
+//        boolean messageReceived = latch.await(5, TimeUnit.SECONDS);
+//
+//        // Assert that the message was not received
+//        assertEquals(false, messageReceived, "Message with a different routing key should not be consumed.");
+//    }
+//    this version is failed refer to the below version
+//
+    @Test
+    void testDifferentRoutingKey() throws InterruptedException {
+        // Declare a separate queue for the different routing key
+        String differentQueueName = "differentQueue";
+        RabbitAdmin rabbitAdmin = new RabbitAdmin(rabbitTemplate.getConnectionFactory());
+        rabbitAdmin.declareQueue(new org.springframework.amqp.core.Queue(differentQueueName));
+        rabbitAdmin.declareBinding(new org.springframework.amqp.core.Binding(
+            differentQueueName,
+            org.springframework.amqp.core.Binding.DestinationType.QUEUE,
+            "blogExchange",
+            "differentRoutingKey",
+            null
+        ));
+
+        // Send a message with a different routing key
+        rabbitTemplate.convertAndSend("blogExchange", "differentRoutingKey", new BlogPost("2", "Other Title", "Other Content"));
+
+        // Attempt to receive the message from the original queue
+        BlogPost blogPost = (BlogPost) rabbitTemplate.receiveAndConvert(QUEUE_NAME);
+
+        // Assert that no message is received in the original queue
+        assertEquals(null, blogPost, "Message with a different routing key should not be consumed by the original queue.");
+    }
 }
