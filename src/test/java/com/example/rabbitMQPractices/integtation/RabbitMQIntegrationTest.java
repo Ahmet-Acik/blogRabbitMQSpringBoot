@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -113,6 +114,7 @@ class RabbitMQIntegrationTest {
             throw new AssertionError("Message was not requeued as expected.");
         }
     }
+
     @Test
     void testProducerWhenRabbitMQIsDown() {
         // Stop RabbitMQ
@@ -127,5 +129,18 @@ class RabbitMQIntegrationTest {
             // Expected exception due to RabbitMQ being down
             System.out.println("Producer failed as expected: " + e.getMessage());
         }
+    }
+
+    @Test
+    void testConsumerWhenQueueIsEmpty() {
+        // Ensure the queue is empty
+        RabbitAdmin rabbitAdmin = new RabbitAdmin(rabbitTemplate.getConnectionFactory());
+        rabbitAdmin.purgeQueue(QUEUE_NAME, true);
+
+        // Attempt to receive a message
+        BlogPost blogPost = (BlogPost) rabbitTemplate.receiveAndConvert(QUEUE_NAME);
+
+        // Assert that no message is received
+        assertEquals(null, blogPost, "Queue should be empty, but a message was received.");
     }
 }
